@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>にっぽんたんけん図鑑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE すごろくの前に、一人で調べて練習する。やさしく、元気に。授業でも家でも
+   IDEA 探検隊の図鑑ノート：地図を押すと、その県のページが開く。練習でスタンプがたまる
+   PICTURE 海の上に浮かぶ地方の地図（すごろくと同じ地図）。県や名所を押して調べる
+   COLOUR 海の青が地、地方の色で県をぬる。黄色はスタンプとクリア
+   TYPE Dela Gothic One（見出し）+ M PLUS Rounded 1c（本文）
+   LAYOUT 広い画面は左に地図、右に図鑑のページ。せまい画面は 地図→ページ */
+:root{color-scheme:light;--sea1:#2a93dc;--sea2:#1766b0;--ink:#1c2430;--sub:#56616f;--card:#fff;--line:#d9e4ef;--yel:#ffc928;--red:#e5432f;--grn:#2fa35a;--blu:#2f7fd6}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:linear-gradient(180deg,var(--sea1),var(--sea2)) fixed;color:var(--ink);font:16px/1.6 "M PLUS Rounded 1c",system-ui,sans-serif;overflow-x:clip;min-height:100vh}
+button{font:inherit;color:inherit}
+h1{font:400 clamp(24px,3.6vw,36px)/1.1 "Dela Gothic One",sans-serif;color:#fff;margin:0;text-shadow:0 3px 0 #0d4a85}
+h2{font-size:20px;margin:0 0 8px;line-height:1.3}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px max(2vw,14px) 6px;max-width:1280px;margin:0 auto}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.tab{border:0;border-radius:14px 14px 4px 4px;padding:8px 16px;min-height:46px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.25);color:#fff}
+.tab[aria-selected=true]{background:#fff;color:var(--ink)}
+.regs{display:flex;gap:6px;overflow-x:auto;padding:6px max(2vw,14px) 10px;max-width:1280px;margin:0 auto;scrollbar-width:thin}
+.reg{flex:none;border:0;border-radius:999px;padding:6px 14px;min-height:44px;font-weight:800;cursor:pointer;background:#fff;border-left:8px solid var(--c);box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.reg[aria-pressed=true]{background:var(--c);color:#fff}
+.reg small{font-weight:700;opacity:.8;margin-left:4px}
+main{max-width:1280px;margin:0 auto;padding:0 max(2vw,14px) 30px}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr);gap:14px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--card);border-radius:20px;padding:16px;box-shadow:0 6px 0 rgba(0,0,0,.15)}
+.mapbox{background:rgba(255,255,255,.12);border-radius:20px;padding:6px}
+.mapbox svg{display:block;width:100%;height:auto;max-height:72vh}
+.pf{cursor:pointer}.pf:hover{filter:brightness(1.08)}
+.dotp{cursor:pointer}
+.btn{border:0;border-radius:14px;padding:10px 18px;min-height:46px;font-weight:800;cursor:pointer;background:var(--red);color:#fff;box-shadow:0 4px 0 #9b2416}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #9b2416}
+.btn.blue{background:var(--blu);box-shadow:0 4px 0 #1b4f8d}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:0 3px 0 var(--line)}
+.btn.small{min-height:40px;padding:6px 12px;font-size:15px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:2px solid var(--line);background:#f5f8fb;border-radius:999px;padding:4px 12px;min-height:40px;font-weight:700;cursor:pointer;font-size:15px}
+.chip.seen{background:#fff4cc;border-color:var(--yel)}
+.chip.spot{border-style:dashed}
+.prog{height:12px;border-radius:999px;background:var(--line);overflow:hidden;margin:6px 0 10px}
+.prog i{display:block;height:100%;background:var(--yel)}
+.page h3{font:400 clamp(26px,3vw,34px)/1.15 "Dela Gothic One",sans-serif;margin:4px 0 2px}
+.tag{display:inline-block;border-radius:999px;padding:2px 12px;font-weight:800;font-size:14px;color:#fff;background:var(--c,var(--blu))}
+.head{display:flex;gap:14px;align-items:center}
+.shape{width:120px;height:120px;flex:none;background:#eef5fb;border-radius:16px;padding:8px}
+.rows{display:grid;gap:10px;margin-top:12px}
+.row{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:8px;align-items:start;border-top:1px dashed var(--line);padding-top:8px}
+.row>b{color:var(--sub);font-size:14px}
+.items{display:flex;flex-wrap:wrap;gap:8px}
+.item{display:grid;justify-items:center;gap:2px;padding:6px 8px;border:2px solid var(--line);border-radius:14px;background:#fff;font-weight:800;font-size:14px;min-width:80px;text-align:center}
+button.item{cursor:pointer}
+.item small{font-weight:500;color:var(--sub);font-size:12.5px;max-width:9em;line-height:1.35}
+.ic{width:52px;height:52px}.ic.big{width:96px;height:96px}
+.pimg{object-fit:cover;border-radius:12px;width:84px;height:84px}.pimg.big{width:170px;height:170px;border-radius:18px}.res .pimg{width:110px;height:110px}
+.why{background:#fff8dc;border-radius:14px;padding:10px 12px;margin-top:12px;font-weight:700}
+.hint{color:var(--sub);font-size:14px;margin:6px 0 0}
+.wiki{font-size:14px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0}
+.mode{border:3px solid var(--line);background:#f7fafd;border-radius:18px;padding:12px;text-align:left;cursor:pointer;min-height:92px}
+.mode b{font-size:20px;display:block}
+.rkc{border:2px solid var(--line);background:#f5f8fb;border-radius:12px;padding:4px 10px;font-size:14px;font-weight:700}.rkc b{font-size:17px}.rkc small{color:var(--sub);font-weight:500}.rkc.rhi{background:#fff4cc;border-color:var(--yel)}
+.rk{display:grid;gap:6px;margin:8px 0}.rk div{display:grid;grid-template-columns:8em minmax(0,1fr) auto;gap:8px;align-items:center;font-weight:700}.rk i{display:block;height:16px;border-radius:999px;background:var(--blu)}.rk div.hit i{background:var(--yel)}.rk div.hit span{color:#a07800}.rk b{white-space:nowrap}.mode small{color:var(--sub);display:block;line-height:1.4}
+.mode .st{color:#a07800;font-weight:800}
+.mode:disabled{opacity:.5;cursor:not-allowed}
+.qtop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.q{font-size:clamp(22px,3vw,30px);font-weight:800;line-height:1.35;margin:8px 0 12px}
+.qfig{display:block;margin:0 auto 12px;height:min(32vh,240px);width:auto;max-width:100%;border-radius:14px}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(max-width:520px){.choices{grid-template-columns:minmax(0,1fr)}}
+.ch{border:3px solid var(--line);background:#f7fafd;border-radius:16px;padding:12px;font-size:clamp(18px,2.4vw,24px);font-weight:800;min-height:62px;cursor:pointer;text-align:left}
+.ch.ok{border-color:var(--grn);background:#e3f6e9}.ch.ng{border-color:var(--red);background:#fde7e3}.ch.gone{visibility:hidden}
+.res{margin-top:12px;border-radius:16px;padding:12px 14px;background:#f3f7fb}
+.res p{margin:2px 0}.big{font-size:clamp(22px,3vw,28px);font-weight:800}
+.bar{display:flex;gap:4px;margin:6px 0}.bar i{flex:1;height:10px;border-radius:999px;background:var(--line)}
+.bar i.o{background:var(--grn)}.bar i.x{background:var(--red)}.bar i.n{background:var(--yel)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
+.stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.rcard{border-radius:18px;padding:12px;background:#fff;border:3px solid var(--line)}
+.rcard.done{border-color:var(--yel);background:#fffbea}
+.rcard h4{margin:0 0 8px;font-size:18px;display:flex;align-items:center;gap:8px}
+.st4{display:flex;gap:8px;flex-wrap:wrap}
+.stamp{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;line-height:1.15;text-align:center;border:3px dashed var(--line);color:#9aa6b3}
+.stamp.on{border:3px solid var(--c);background:var(--c);color:#fff;transform:rotate(-8deg)}
+.medal{width:34px;height:34px;flex:none}
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:8px 0 14px}
+.num{background:#f3f7fb;border-radius:16px;padding:10px 12px}.num b{font:400 30px/1.1 "Dela Gothic One",sans-serif;display:block}
+.vids{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.vid{background:#fff;border-radius:18px;padding:12px;border-left:10px solid var(--c)}
+.vid video{width:100%;border-radius:12px;background:#000;display:block;margin-top:8px}
+.soon{display:grid;place-items:center;aspect-ratio:16/9;border-radius:12px;background:#eef3f8;color:var(--sub);font-weight:800;margin-top:8px;text-align:center;padding:10px}
+.foot{color:#e6f1fb;font-size:13px;padding:6px max(2vw,14px) 20px;max-width:1280px;margin:0 auto}
+.foot a{color:#fff}
+.ov{position:fixed;inset:0;background:rgba(8,30,60,.55);display:grid;place-items:center;padding:16px;z-index:10}
+.modal{background:#fff;border-radius:22px;padding:20px;width:min(520px,100%)}
+[hidden]{display:none!important}
+.pop{animation:pop .5s ease-out}@keyframes pop{0%{transform:scale(.6) rotate(-20deg);opacity:0}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+@media(prefers-reduced-motion:reduce){.pop{animation:none}}
+</style></head><body>
+<div class="top"><h1>にっぽんたんけん図鑑</h1>
+ <div class="tabs" role="tablist">
+  <button class="tab" role="tab" data-v="zukan">図鑑</button>
+  <button class="tab" role="tab" data-v="drill">れんしゅう</button>
+  <button class="tab" role="tab" data-v="video">動画</button>
+  <button class="tab" role="tab" data-v="rec">きろく</button>
+ </div></div>
+<div class="regs" id="regs"></div>
+<main id="main"></main>
+<p class="foot">すごろく「にっぽんクイズすごろく」と同じ地図・データです。地図：地球地図日本（国土地理院）をもとに作成／湖：© OpenStreetMap contributors。イラスト：Geminiで作成。きろくは、このタブレット（このブラウザ）だけにのこります。</p>
+<div class="ov" id="ov" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<script src="data.js"></script>
+<script>
+{
+/* 動画：できたら videos/ に入れて、ここに書く */
+const VIDEOS={0:"videos/r0.mp4",1:"videos/r1.mp4",2:"videos/r2.mp4",3:"videos/r3.mp4",4:"videos/r4.mp4",5:"videos/r5.mp4",6:"videos/r6.mp4",7:"videos/r7.mp4"};
+const $=id=>document.getElementById(id);
+/* イラスト（Geminiで作成） */
+const PIC={"札幌": "pics/s01_1.webp", "小樽": "pics/s01_2.webp", "函館": "pics/s01_3.webp", "洞爺湖": "pics/s01_4.webp", "登別": "pics/s01_5.webp", "苫小牧": "pics/s01_6.webp", "千歳": "pics/s01_7.webp", "帯広": "pics/s01_8.webp", "釧路": "pics/s01_9.webp", "根室": "pics/s02_1.webp", "知床": "pics/s02_2.webp", "網走": "pics/s02_3.webp", "旭川": "pics/s02_4.webp", "富良野": "pics/s02_5.webp", "稚内": "pics/s02_6.webp", "夕張": "pics/s02_7.webp", "弘前": "pics/s02_8.webp", "八戸": "pics/s02_9.webp", "平泉": "pics/s03_1.webp", "三陸海岸": "pics/s03_2.webp", "男鹿半島": "pics/s03_3.webp", "角館": "pics/s03_4.webp", "仙台": "pics/s03_5.webp", "松島": "pics/s03_6.webp", "蔵王": "pics/s03_7.webp", "庄内平野": "pics/s03_8.webp", "会津若松": "pics/s03_9.webp", "猪苗代湖": "pics/s04_1.webp", "草津温泉": "pics/s04_2.webp", "富岡": "pics/s04_3.webp", "日光": "pics/s04_4.webp", "宇都宮": "pics/s04_5.webp", "つくば": "pics/s04_6.webp", "鹿島": "pics/s04_7.webp", "川越": "pics/s04_8.webp", "秩父": "pics/s04_9.webp", "成田": "pics/s05_1.webp", "銚子": "pics/s05_2.webp", "浅草": "pics/s05_3.webp", "横浜": "pics/s05_4.webp", "鎌倉": "pics/s05_5.webp", "箱根": "pics/s05_6.webp", "佐渡島": "pics/s05_7.webp", "立山黒部": "pics/s05_8.webp", "金沢": "pics/s05_9.webp", "勝山": "pics/s06_1.webp", "白川郷": "pics/s06_2.webp", "軽井沢": "pics/s06_3.webp", "松本": "pics/s06_4.webp", "富士五湖": "pics/s06_5.webp", "富士山": "pics/s06_6.webp", "浜松": "pics/s06_7.webp", "牧之原": "pics/s06_8.webp", "名古屋": "pics/s06_9.webp", "豊田": "pics/s07_1.webp", "伊勢神宮": "pics/s07_2.webp", "四日市": "pics/s07_3.webp", "琵琶湖": "pics/s07_4.webp", "彦根": "pics/s07_5.webp", "金閣寺": "pics/s07_6.webp", "天橋立": "pics/s07_7.webp", "道頓堀": "pics/s07_8.webp", "関西空港": "pics/s07_9.webp", "姫路城": "pics/s08_1.webp", "神戸港": "pics/s08_2.webp", "淡路島": "pics/s08_3.webp", "東大寺": "pics/s08_4.webp", "吉野": "pics/s08_5.webp", "熊野古道": "pics/s08_6.webp", "白浜": "pics/s08_7.webp", "鳥取砂丘": "pics/s08_8.webp", "境港": "pics/s08_9.webp", "大山": "pics/s09_1.webp", "出雲大社": "pics/s09_2.webp", "石見銀山": "pics/s09_3.webp", "宍道湖": "pics/s09_4.webp", "倉敷": "pics/s09_5.webp", "後楽園": "pics/s09_6.webp", "原爆ドーム": "pics/s09_7.webp", "宮島": "pics/s09_8.webp", "呉": "pics/s09_9.webp", "秋吉台": "pics/s10_1.webp", "下関": "pics/s10_2.webp", "錦帯橋": "pics/s10_3.webp", "鳴門": "pics/s10_4.webp", "祖谷": "pics/s10_5.webp", "吉野川": "pics/s10_6.webp", "小豆島": "pics/s10_7.webp", "こんぴらさん": "pics/s10_8.webp", "瀬戸大橋": "pics/s10_9.webp", "満濃池": "pics/s11_1.webp", "道後温泉": "pics/s11_2.webp", "今治": "pics/s11_3.webp", "宇和島": "pics/s11_4.webp", "桂浜": "pics/s11_5.webp", "四万十川": "pics/s11_6.webp", "室戸岬": "pics/s11_7.webp", "北九州": "pics/s11_8.webp", "太宰府": "pics/s11_9.webp", "有田": "pics/s12_1.webp", "吉野ヶ里": "pics/s12_2.webp", "雲仙": "pics/s12_3.webp", "軍艦島": "pics/s12_4.webp", "熊本城": "pics/s12_5.webp", "阿蘇山": "pics/s12_6.webp", "別府温泉": "pics/s12_7.webp", "高千穂": "pics/s12_8.webp", "桜島": "pics/s12_9.webp", "屋久島": "pics/s13_1.webp", "種子島": "pics/s13_2.webp", "首里城": "pics/s13_3.webp", "石垣島": "pics/s13_4.webp", "じゃがいも": "pics/s13_5.webp", "牛乳": "pics/s13_6.webp", "かに": "pics/s13_7.webp", "りんご": "pics/s13_8.webp", "ほたて": "pics/s13_9.webp", "わんこそば": "pics/s14_1.webp", "わかめ": "pics/s14_2.webp", "米": "pics/s14_3.webp", "きりたんぽ": "pics/s14_4.webp", "牛たん": "pics/s14_5.webp", "かき": "pics/s14_6.webp", "笹かまぼこ": "pics/s14_7.webp", "さくらんぼ": "pics/s14_8.webp", "もも": "pics/s15_1.webp", "赤べこ": "pics/s15_2.webp", "メロン": "pics/s15_3.webp", "納豆": "pics/s15_4.webp", "いちご": "pics/s15_5.webp", "かんぴょう": "pics/s15_6.webp", "こんにゃく": "pics/s15_7.webp", "キャベツ": "pics/s15_8.webp", "ねぎ": "pics/s15_9.webp", "草加せんべい": "pics/s16_1.webp", "落花生": "pics/s16_2.webp", "いわし": "pics/s16_3.webp", "もんじゃ焼き": "pics/s16_4.webp", "シウマイ": "pics/s16_5.webp", "笹だんご": "pics/s16_7.webp", "ほたるいか": "pics/s16_8.webp", "ます寿し": "pics/s16_9.webp", "金ぱく": "pics/s17_1.webp", "輪島ぬり": "pics/s17_2.webp", "めがねのフレーム": "pics/s17_3.webp", "越前がに": "pics/s17_4.webp", "ぶどう": "pics/s17_5.webp", "レタス": "pics/s17_7.webp", "そば": "pics/s17_9.webp", "刃物": "pics/s18_1.webp", "ほう葉みそ": "pics/s18_2.webp", "お茶": "pics/s18_3.webp", "うなぎ": "pics/s18_4.webp", "まぐろ": "pics/s18_5.webp", "自動車": "pics/s18_6.webp", "みそかつ": "pics/s18_7.webp", "伊勢えび": "pics/s18_8.webp", "真珠": "pics/s18_9.webp", "近江牛": "pics/s19_1.webp", "ふなずし": "pics/s19_2.webp", "八つ橋": "pics/s19_3.webp", "西陣織": "pics/s19_4.webp", "たこ焼き": "pics/s19_5.webp", "お好み焼き": "pics/s19_6.webp", "神戸牛": "pics/s19_7.webp", "たまねぎ": "pics/s19_8.webp", "柿の葉寿司": "pics/s19_9.webp", "墨": "pics/s20_1.webp", "みかん": "pics/s20_2.webp", "梅": "pics/s20_3.webp", "梨": "pics/s20_4.webp", "らっきょう": "pics/s20_5.webp", "しじみ": "pics/s20_6.webp", "マスカット": "pics/s20_8.webp", "きびだんご": "pics/s20_9.webp", "もみじまんじゅう": "pics/s21_2.webp", "ふぐ": "pics/s21_3.webp", "すだち": "pics/s21_4.webp", "なると金時": "pics/s21_5.webp", "うどん": "pics/s21_6.webp", "たい": "pics/s21_8.webp", "かつお": "pics/s21_9.webp", "なす": "pics/s22_1.webp", "明太子": "pics/s22_2.webp", "ラーメン": "pics/s22_3.webp", "のり": "pics/s22_4.webp", "有田焼": "pics/s22_5.webp", "カステラ": "pics/s22_6.webp", "ちゃんぽん": "pics/s22_7.webp", "すいか": "pics/s22_8.webp", "トマト": "pics/s22_9.webp", "からしれんこん": "pics/s23_1.webp", "しいたけ": "pics/s23_2.webp", "かぼす": "pics/s23_3.webp", "マンゴー": "pics/s23_4.webp", "地鶏": "pics/s23_5.webp", "さつまいも": "pics/s23_6.webp", "黒ぶた": "pics/s23_7.webp", "さとうきび": "pics/s23_8.webp", "ゴーヤー": "pics/s23_9.webp"};
+
+/* ランキング（すごろくと同じデータ） */
+const POP={北海道:5043,青森:1165,岩手:1145,宮城:2248,秋田:897,山形:1011,福島:1743,茨城:2806,栃木:1885,群馬:1890,埼玉:7332,千葉:6251,東京:14178,神奈川:9225,新潟:2099,富山:997,石川:1098,福井:739,山梨:791,長野:1987,岐阜:1916,静岡:3527,愛知:7460,三重:1711,滋賀:1402,京都:2520,大阪:8757,兵庫:5337,奈良:1285,和歌山:880,鳥取:531,島根:642,岡山:1831,広島:2714,山口:1281,徳島:685,香川:917,愛媛:1276,高知:666,福岡:5103,佐賀:795,長崎:1267,熊本:1709,大分:1096,宮崎:1042,鹿児島:1549,沖縄:1468};
+const AREA={北海道:83424,岩手:15275,福島:13784,長野:13562,新潟:12584,秋田:11638,岐阜:10621,青森:9646,山形:9323,鹿児島:9186,広島:8479,兵庫:8401,静岡:7777,宮崎:7735,熊本:7409,宮城:7282,岡山:7114,高知:7104,島根:6708,栃木:6408,群馬:6362,大分:6341,山口:6113,茨城:6097,三重:5774,愛媛:5676,愛知:5173,千葉:5157,福岡:4988,和歌山:4725,京都:4612,山梨:4465,富山:4248,福井:4191,石川:4186,徳島:4147,長崎:4131,滋賀:4017,埼玉:3798,奈良:3691,鳥取:3507,佐賀:2441,神奈川:2416,沖縄:2282,東京:2194,大阪:1905,香川:1877};
+const DENS={};Object.keys(POP).forEach(k=>DENS[k]=Math.round(POP[k]*1000/AREA[k]));
+const RANKV={dens:{q:"人口密度（人のこみぐあい）がいちばん高いのは？",v:DENS,fmt:x=>x.toLocaleString()+"人",src:"人口と面積から計算",qmin:"人口密度（人のこみぐあい）がいちばん低いのは？"},pop:{q:"人口がいちばん多いのは？",v:POP,fmt:x=>Math.round(x/10)+"万人",src:"総務省「人口推計」2023〜2024年",qmin:"人口がいちばん少ないのは？"},area:{q:"面積（広さ）がいちばん広いのは？",v:AREA,fmt:x=>x.toLocaleString()+"km²",src:"国土地理院",qmin:"面積（広さ）がいちばん狭いのは？"}};
+const RANKT={rice:{q:"米の収穫量がいちばん多いのは？",top:"新潟 北海道 秋田 福島 宮城 茨城 山形 栃木 千葉 青森 岩手".split(" "),low:"東京 神奈川 大阪 沖縄 和歌山 奈良 山梨 京都 香川 徳島 高知 長崎 鳥取 静岡 愛媛 宮崎 大分".split(" "),src:"農林水産省 令和7年産（主食用）"},
+ apple:{q:"りんごの収穫量がいちばん多いのは？",top:"青森 長野 岩手 山形 福島 秋田".split(" "),low:"沖縄 鹿児島 宮崎 高知 徳島 香川 東京 大阪 神奈川 千葉 佐賀 長崎".split(" "),src:"農林水産省 令和7年産"},
+ mikan:{q:"みかんの収穫量がいちばん多いのは？",top:"和歌山 愛媛 静岡 熊本 長崎".split(" "),low:"北海道 青森 岩手 秋田 山形 宮城 福島 新潟 長野 山梨 栃木 群馬 富山 石川".split(" "),src:"農林水産省 令和7年産"},
+ tea:{q:"お茶（荒茶）の生産量がいちばん多いのは？",top:"鹿児島 静岡 三重 宮崎 京都".split(" "),low:"北海道 青森 岩手 秋田 山形 新潟 長野 富山 石川 沖縄".split(" "),src:"農林水産省 令和7年産。2024年から鹿児島が1位、それまでは静岡が1位"},
+ kogyo:{q:"工業の生産額（製造品出荷額等）がいちばん多いのは？",top:"愛知 大阪 静岡 兵庫 神奈川".split(" "),low:"高知 沖縄 鳥取 島根 秋田 長崎 宮崎 青森 奈良 徳島".split(" "),src:"総務省・経済産業省 2023年経済構造実態調査"},
+ fish:{q:"海でとれる魚などの量（漁獲量）がいちばん多いのは？",top:"北海道 茨城 長崎 宮城 静岡".split(" "),low:"栃木 群馬 埼玉 山梨 長野 岐阜 滋賀 奈良 福井 佐賀 秋田 山形 岡山".split(" "),src:"農林水産省 令和4年"}};
+
+const rankPool=n=>{const reg=REG!=="all"&&REG!==0?P.filter(x=>x.r===REG).map(x=>x.n):[];const d=ndist(n);const near=P.map(x=>x.n).sort((a,b)=>d[a]-d[b]);return [...new Set(reg.concat(near.slice(0,9)))].filter(x=>x!==n)};
+function rankQ(n){
+  for(const k of shuffle(["pop","area","dens","rice","fish","apple","mikan","tea","kogyo"])){
+    if(RANKV[k]){const R=RANKV[k],pool=rankPool(n);
+      const mn=Math.random()<.5;
+      for(let t=0;t<40;t++){const four=[n,...shuffle(pool).slice(0,3)],s=four.slice().sort((a,b)=>R.v[b]-R.v[a]),a=mn?s[3]:s[0];
+        if(mn?R.v[s[2]]>=R.v[s[3]]*1.25:R.v[s[0]]>=R.v[s[1]]*1.25)return{t:"rank",n:a,q:"この中で、"+(mn?R.qmin:R.q),ans:ken(a),ch:shuffle(four.map(ken)),ex:"出典："+R.src,vals:s.map(p=>[ken(p),R.v[p],R.fmt(R.v[p]),p===a])}}
+    }else{const R=RANKT[k];if(REG!=="all"&&!R.top.some(p=>PN[p].r===REG))continue;const d=ndist(n),near=a=>a.slice().sort((p,q)=>d[p]-d[q]);
+      const ans=R.top.includes(n)?n:near(R.top)[Math.floor(Math.random()*2)];
+      const lows=near(R.low).slice(0,6).filter(x=>x!==ans);const others=R.low.includes(n)&&!lows.slice(0,3).includes(n)?[n,...shuffle(lows).slice(0,2)]:shuffle(lows).slice(0,3);
+      return{t:"rank",n:ans,q:"この中で、"+R.q,ans:ken(ans),ch:shuffle([ans,...others].map(ken)),ex:`${ken(ans)}は全国でも上位です。上位：${R.top.slice(0,5).map(ken).join("・")}…（出典：${R.src}）`}}
+  }
+  return null;
+}
+const pic=(n,k,cls="ic")=>PIC[n]?`<img class="${cls} pimg" src="${PIC[n]}" alt="${esc(n)}" loading="lazy">`:ICW(k,cls);
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const KEY="nippon-tanken";
+const R=Object.assign({seen:{},spot:{},clear:{},best:{},days:[],ans:0,ok:0},lsGet(KEY,{}));
+const save=()=>lsSet(KEY,R);
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()};
+const MODES={rank:{t:"ランキング",d:"4つの県から1位をえらぼう（人口・面積（広さ）・人口密度（人のこみぐあい）は、いちばん少ない・狭い・低いも）"},shape:{t:"形あて",d:"県の形を見て、どの県か当てよう"},map:{t:"地図あて",d:"地図で県の場所を当てよう"},spot:{t:"名所あて",d:"都市・名所と、知られていることを結びつけよう"}};
+const prefsOf=r=>r==="all"?P:P.filter(p=>p.r===r);
+const spotsIn=r=>r==="all"?SPOTS:SPOTS.filter(s=>s.r===r);
+const modesFor=r=>r===0?["spot","rank"]:["shape","map","spot","rank"];
+let V="zukan",REG=3,SEL=null,Q=null;
+
+/* ---------- 地図 ---------- */
+const pathBox=d=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;d.split("M").slice(1).forEach(seg=>{const [h,rel]=seg.replace("z","").split("l");let [x,y]=h.trim().split(/\s+/).map(Number);const u=()=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)};u();const r=(rel||"").trim().split(/\s+/).map(Number);for(let i=0;i+1<r.length;i+=2){x+=r[i];y+=r[i+1];u()}});return[x0,y0,x1-x0,y1-y0]};
+/* mode: "zukan" | "tap" */
+function mapSVG(r,mode,mark){
+  const L=LAYOUT[r==="all"?"all":String(r)],M=L.m,[s,tx,ty]=L.tf,inR=n=>r==="all"||PN[n].r===r;
+  const land=Object.entries(MAPP).map(([n,d])=>{
+    if(!inR(n))return `<path d="${d}" fill="#cfdccb" fill-opacity=".85" stroke="#fff" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+    let op=mode==="tap"?.35:R.seen[n]?.75:.35,fill=RCOL[PN[n].r],sw=1.4,st="#fff";
+    if(mark&&mark[n]==="ok"){fill="#2fa35a";op=1}if(mark&&mark[n]==="ng"){fill="#e5432f";op=1}
+    if(mode==="zukan"&&SEL&&SEL.k==="p"&&SEL.n===n){st="#1c2430";sw=3.5;op=1}
+    return `<path class="pf" data-p="${n}" d="${d}" fill="#fbf5e4" stroke="none"/><path class="pf" data-p="${n}" d="${d}" fill="${fill}" fill-opacity="${op}" stroke="${st}" stroke-width="${sw}" vector-effect="non-scaling-stroke" stroke-linejoin="round"><title>${mode==="tap"?"":ken(n)}</title></path>`}).join("");
+  let over="";
+  if(r!=="all"&&mode==="zukan"){
+    const lab=(x,y,t,fs,w)=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}" font-weight="${w}" fill="#1c2430" stroke="#fff" stroke-width="${fs*.28}" paint-order="stroke" stroke-linejoin="round" pointer-events="none">${esc(t)}</text>`;
+    spotsIn(r).forEach(sp=>{const q=L.pos[sp.n];if(!q)return;const sel=SEL&&SEL.k==="s"&&SEL.n===sp.n,seen=R.spot[sp.n];
+      over+=`<g class="dotp" data-s="${esc(sp.n)}"><circle cx="${q[2]}" cy="${q[3]}" r="${M*.28}" fill="transparent"/><circle cx="${q[2]}" cy="${q[3]}" r="${M*(sel?.16:.11)}" fill="${seen?"#ffc928":"#fff"}" stroke="#1c2430" stroke-width="${sel?3:2}"/></g>`;
+      if(sel)over+=lab(q[2],q[3]-M*.22,sp.n,M*.3,800)});
+    prefsOf(r).forEach(p=>{const q=L.pos[p.n];if(q)over+=lab(q[2],q[3]+M*.12,ken(p.n),M*.34,800)});
+  }
+  const ghost=(L.ghost||[]).map(([n,x,y])=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${M*.27}" font-weight="700" fill="#4d5a6a" opacity=".75">${ken(n)}</text>`).join("");
+  const inset=L.inset?`<rect x="${L.inset[0]}" y="${L.inset[1]}" width="${L.inset[2]}" height="${L.inset[3]}" rx="10" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="6 6" opacity=".8"/><text x="${L.inset[0]+8}" y="${L.inset[1]+M*.32}" font-size="${M*.22}" font-weight="700" fill="#fff">沖縄（場所をずらしてのせています）</text>`:"";
+  return `<svg viewBox="0 0 ${L.w} ${L.h}" role="img" aria-label="${RNAME(r)}の地図"><g transform="matrix(${s},0,0,${s},${tx},${ty})">${land}<path d="${LAKEP}" fill="#4aa3e2"/></g>${ghost}${inset}${over}</svg>`;
+}
+const shapeSVG=(n,cls="shape",col)=>{const [x,y,w,h]=pathBox(SHAPE[n]),pd=Math.max(w,h)*.06;return `<svg class="${cls}" viewBox="${x-pd} ${y-pd} ${w+2*pd} ${h+2*pd}" aria-label="${cls==="qfig"?"県の形":ken(n)+"の形"}"><path d="${SHAPE[n]}" fill="${col||RCOL[PN[n].r]}" fill-rule="evenodd" stroke="#1c2430" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`};
+
+/* ---------- 地方のボタン ---------- */
+function drawRegs(){
+  const list=V==="zukan"||V==="drill"?["all",0,1,2,3,4,5,6,7]:[];
+  $("regs").hidden=!list.length;
+  $("regs").innerHTML=list.map(r=>{const c=r==="all"?"#1c2430":RCOL[r];const n=r==="all"?"":`<small>${prefsOf(r).length?prefsOf(r).length+"県":""}</small>`;
+    return `<button class="reg" style="--c:${c}" data-r="${r}" aria-pressed="${REG===r}">${RNAME(r)}${n}</button>`}).join("");
+}
+$("regs").onclick=e=>{const b=e.target.closest("[data-r]");if(!b)return;REG=b.dataset.r==="all"?"all":+b.dataset.r;SEL=null;Q=null;render()};
+document.querySelector(".tabs").onclick=e=>{const b=e.target.closest("[data-v]");if(!b)return;V=b.dataset.v;Q=null;if(V==="zukan")SEL=null;location.hash=V;render()};
+
+/* ---------- 図鑑 ---------- */
+const zCount=r=>{const ps=prefsOf(r),ss=spotsIn(r);return{done:ps.filter(p=>R.seen[p.n]).length+ss.filter(s=>R.spot[s.n]).length,all:ps.length+ss.length}};
+
+const RANKED={apple:3,mikan:5,tea:5,kogyo:5};
+/* 米：農林水産省 令和7年産 水稲（主食用）収穫量 上位13／漁獲量：農林水産省 令和4年 海面漁業漁獲量 上位5 */
+const RVAL={rice:{新潟:570200,北海道:496300,秋田:453900,福島:371200,宮城:342800,茨城:338800,山形:334000,栃木:302700,千葉:289900,青森:260500,岩手:250000,長野:183600,富山:172500},fish:{北海道:870300,茨城:285200,長崎:262200,宮城:187200,静岡:147200}};
+const LBL={rice:"米",fish:"漁獲量",apple:"りんご",mikan:"みかん",tea:"お茶",kogyo:"工業の生産額"};
+function rankRow(n){
+  const pos=(v,k)=>1+Object.keys(v).filter(x=>v[x]>v[k]).length;
+  const main=[["人口",POP,x=>Math.round(x/10).toLocaleString()+"万人"],["面積（広さ）",AREA,x=>x.toLocaleString()+"km²"],["人口密度（人のこみぐあい）",DENS,x=>x.toLocaleString()+"人/km²"]]
+    .map(([t,v,f])=>{const r=pos(v,n);return `<span class="rkc${r<=3?" rhi":""}">${t} <b>${r}位</b><small>（${f(v[n])}）</small></span>`}).join("");
+  const extra=Object.entries(LBL).filter(([k])=>RANKT[k].top.includes(n)||(RVAL[k]&&RVAL[k][n])).map(([k,t])=>{
+    if(RVAL[k]&&RVAL[k][n]){const i=Object.keys(RVAL[k]).indexOf(n)+1;return `<span class="rkc${i<=3?" rhi":""}">${t} <b>${i}位</b><small>（約${Math.round(RVAL[k][n]/10000)}万トン）</small></span>`}
+    const i=RANKT[k].top.indexOf(n)+1;return `<span class="rkc rhi">${t} <b>${RANKED[k]&&i<=RANKED[k]?i+"位":"上位"}</b></span>`}).join("");
+  return `<div class="row"><b>ランキング<br><small style="font-weight:500">47都道府県の中で</small></b><div class="chips">${main}${extra}</div></div>`;
+}
+function prefPage(n){
+  const p=PN[n],sp=spotsOf(n);
+  return `<div class="page"><span class="tag" style="--c:${RCOL[p.r]}">${REGIONS[p.r]}</span>
+   <div class="head">${shapeSVG(n)}<div><h3>${ken(n)}</h3><p class="hint" style="margin:0">けんちょうしょざいち：<b style="color:var(--ink);font-size:18px">${esc(capOf(n))}</b></p></div></div>
+   <div class="why">${esc(p.why)}</div>
+   <div class="rows">
+    <div class="row"><b>特産品・名物</b><div class="items">${p.sp.map(x=>`<span class="item">${pic(x,SPIC[x]||"dish")}${esc(x)}</span>`).join("")}</div></div>
+    <div class="row"><b>都市・名所</b><div class="items">${sp.length?sp.map(s=>`<button class="item" data-s="${esc(s.n)}">${pic(s.n,STIC[s.n])}${esc(s.n)}<small>${esc(s.f)}</small></button>`).join(""):`<span class="hint">すごろくには入っていません</span>`}</div></div>
+    ${rankRow(n)}
+    <div class="row"><b>となりの県</b><div class="chips">${p.adj.map(a=>`<button class="chip ${R.seen[a]?"seen":""}" data-p="${a}">${ken(a)}${land(n).includes(a)?"":"（海をはさむ）"}</button>`).join("")}</div></div>
+   </div>
+   <p class="hint">人口：総務省「人口推計」／面積：国土地理院／米（令和7年産）・漁獲量（令和4年）・りんご・みかん・お茶：農林水産省／工業：経済構造実態調査</p>
+   <p class="wiki"><a href="${wikiUrl(ken(n))}" target="_blank" rel="noopener">もっと調べる（ウィキペディア）↗</a></p></div>`;
+}
+function spotPage(n){
+  const s=SP[n];
+  return `<div class="page"><span class="tag" style="--c:${RCOL[s.r]}">${REGIONS[s.r]}</span>
+   <div class="head">${pic(n,STIC[n],"ic big")}<div><h3>${esc(n)}</h3><p class="hint" style="margin:0">ある所：${[s.p,s.p2].filter(Boolean).map(ken).join("・")}</p></div></div>
+   <div class="why">${esc(s.f)}</div>
+   <div class="acts">${[s.p,s.p2].filter(Boolean).map(q=>`<button class="btn blue small" data-p="${q}">${ken(q)}のページを見る</button>`).join("")}</div>
+   <p class="wiki"><a href="${wikiUrl(n)}" target="_blank" rel="noopener">写真を見る・もっと調べる（ウィキペディア）↗</a></p></div>`;
+}
+function openSel(k,n){SEL={k,n};if(k==="p")R.seen[n]=1;else R.spot[n]=1;save();
+  if(k==="p"&&REG!=="all"&&PN[n].r!==REG)REG=PN[n].r;if(k==="s"&&REG!=="all"&&SP[n].r!==REG)REG=SP[n].r;
+  if(k==="s"&&REG==="all")REG=SP[n].r;render();
+  if(matchMedia("(max-width:860px)").matches){const pg=$("pageBox");if(pg)pg.scrollIntoView({behavior:"smooth",block:"start"})}}
+function drawZukan(){
+  const r=REG,c=zCount(r);
+  const list=r==="all"?P.map(p=>`<button class="chip ${R.seen[p.n]?"seen":""}" data-p="${p.n}">${ken(p.n)}</button>`).join(""):
+    (prefsOf(r).map(p=>`<button class="chip ${R.seen[p.n]?"seen":""}" data-p="${p.n}">${ken(p.n)}</button>`).join(""))+spotsIn(r).map(s=>`<button class="chip spot ${R.spot[s.n]?"seen":""}" data-s="${esc(s.n)}">${esc(s.n)}</button>`).join("");
+  const page=SEL?(SEL.k==="p"?prefPage(SEL.n):spotPage(SEL.n)):
+    `<h2>${RNAME(r)}を たんけんしよう</h2><p>地図の県${r==="all"?"":"や、点（都市・名所）"}を押すと、ページが開きます。開いたものには黄色のしるしがつきます。</p>
+     ${r!=="all"&&VIDEOS[r]?`<button class="btn blue" data-go="video">${REGIONS[r]}の動画を見る</button>`:""}
+     <p class="hint">ぜんぶ開くと「きろく」に図鑑スタンプがおされます。</p>`;
+  $("main").innerHTML=`<div class="grid"><div><div class="mapbox" id="map">${mapSVG(r,"zukan")}</div>
+    <div class="panel" style="margin-top:12px"><h2>${RNAME(r)}の${r==="all"?"都道府県":r===0?"都市・名所":"県と都市・名所"}</h2>
+    ${r==="all"?"":`<div class="prog" aria-label="開いた数"><i style="width:${c.done/c.all*100}%"></i></div><p class="hint" style="margin:-4px 0 8px">開いた数　${c.done} / ${c.all}</p>`}
+    <div class="chips">${list}</div></div></div>
+    <div class="panel" id="pageBox">${page}</div></div>`;
+}
+
+/* ---------- れんしゅう ---------- */
+const nearOpts=(n,k)=>{const d=ndist(n),r=PN[n].r;return shuffle(P.filter(x=>x.n!==n).sort((a,b)=>(a.r===r?0:1)-(b.r===r?0:1)||d[a.n]-d[b.n]).slice(0,k).map(x=>x.n)).slice(0,3)};
+const mk=(t,n)=>{if(t==="rank")return rankQ(n)||rankQ(n)||rankQ("東京");const ex=ken(n)+"（"+REGIONS[PN[n].r]+"・"+capOf(n)+"）："+PN[n].why;
+  if(t==="shape")return{t,n,q:"この形は、どの都道府県？",fig:shapeSVG(n,"qfig","#e5432f"),ch:shuffle([n,...nearOpts(n,6)]).map(ken),ans:ken(n),ex};
+  if(t==="map"&&REG!=="all")return{t,n,tap:true,q:`「${ken(n)}」は どこ？ 地図で押そう`,ans:ken(n),ex};
+  if(t==="map"){const [x,y,w,h]=pathBox(MAPP[n]),s=Math.max(w,h,180)*2.8,cx=x+w/2,cy=y+h/2;
+    const land=Object.entries(MAPP).map(([k,d])=>`<path d="${d}" fill="${k===n?"#e5432f":"#e3eadb"}" stroke="${k===n?"#1c2430":"#8aa0b5"}" stroke-width="${k===n?2.5:1}" vector-effect="non-scaling-stroke"/>`).join("");
+    return{t,n,q:"地図で赤い色の県は、どこ？",fig:`<svg class="qfig" viewBox="${cx-s*.65} ${cy-s/2} ${s*1.3} ${s}" aria-label="地図"><rect x="${cx-s}" y="${cy-s}" width="${2*s}" height="${2*s}" fill="#bfe0f7"/>${land}<path d="${LAKEP}" fill="#bfe0f7"/></svg>`,ch:shuffle([n,...nearOpts(n,6)]).map(ken),ans:ken(n),ex}}
+  const sp=SP[n],pool=(SPOTS.filter(x=>x.r===sp.r&&x.n!==n).length>=3?SPOTS.filter(x=>x.r===sp.r):SPOTS).filter(x=>x.n!==n),o=shuffle(pool).slice(0,3),ex2=n+"（"+[sp.p,sp.p2].filter(Boolean).map(ken).join("・")+"）："+sp.f;
+  return Math.random()<.5?{t,n,q:`「${sp.f}」で知られているのは、どこ？`,ch:shuffle([n,...o.map(x=>x.n)]),ans:n,ex:ex2,icon:STIC[n]}
+    :{t,n,q:`「${n}」で知られているのは？`,ch:shuffle([sp.f,...o.map(x=>x.f)]),ans:sp.f,ex:ex2,icon:STIC[n]};
+};
+function startRound(t,only){
+  let ns=only||(t==="rank"?Array.from({length:10},()=>rnd(prefsOf(REG)).n):t==="spot"?shuffle(spotsIn(REG).map(s=>s.n)).slice(0,REG==="all"?10:8):shuffle(prefsOf(REG).map(p=>p.n)).slice(0,REG==="all"?10:47));
+  Q={t,reg:REG,list:ns.map(n=>mk(t,n)),i:0,res:[],retry:!!only,hint:false,done:false};render();
+}
+function drawDrill(){
+  if(Q&&Q.reg===REG)return drawQ();
+  Q=null;const ms=modesFor(REG);
+  $("main").innerHTML=`<div class="panel"><h2>${RNAME(REG)}で れんしゅう</h2>
+   <p style="margin:0">やりたい練習をえらぼう。${REG==="all"?"全国は10問です。":"地方の県を全部出します（名所あては8問、ランキングは10問）。"}全部正解で、きろくにスタンプ！</p>
+   <div class="modes">${Object.entries(MODES).map(([k,m])=>{const id=k+"-"+REG,b=R.best[id];return `<button class="mode" data-m="${k}" ${ms.includes(k)?"":"disabled"}><b>${m.t}</b><small>${m.d}</small>
+     <small class="st">${R.clear[id]?"★ クリア！":b!=null?"さいこう "+b+"問正解":ms.includes(k)?"まだ やっていない":"北海道地方は名所あてで練習しよう"}</small></button>`}).join("")}</div>
+   <p class="hint">${REG==="all"?"地図あては、地方をえらぶと「地図を押して答える」練習になります。":"地図あては、地図の県を押して答えます。"}</p></div>`;
+}
+function drawQ(){
+  const q=Q.list[Q.i];
+  if(Q.done){
+    const ok=Q.res.filter(Boolean).length,n=Q.list.length,ng=Q.list.filter((x,i)=>!Q.res[i]).map(x=>x.n),id=Q.t+"-"+Q.reg,perfect=ok===n&&!Q.retry;
+    const newClear=perfect&&!R.clear[id];
+    if(!Q.saved){Q.saved=1;if(!Q.retry)R.best[id]=Math.max(R.best[id]||0,ok);if(perfect)R.clear[id]=1;save()}
+    $("main").innerHTML=`<div class="panel"><h2>${RNAME(Q.reg)}・${MODES[Q.t].t}</h2>
+      <p class="big">${n}問中 ${ok}問 正解！</p>${barHTML()}
+      ${perfect?`<p class="big" style="color:#a07800">${newClear?"★ スタンプゲット！":"★ 全部正解！"}</p>`:Q.retry?`<p>まちがえた問題の練習でした。全部正解でスタンプをもらうには、もう一度はじめからやってみよう。</p>`:""}
+      ${ng.length?`<p style="margin:8px 0 4px;font-weight:800">まちがえたもの</p><div class="chips">${ng.map(x=>`<button class="chip" ${Q.t==="spot"?`data-s="${esc(x)}"`:`data-p="${x}"`}>${Q.t==="spot"?esc(x):ken(x)}</button>`).join("")}</div><p class="hint">押すと図鑑で調べられます。</p>`:""}
+      <div class="acts">${ng.length?`<button class="btn" id="retry">まちがえたものだけ もう一回</button>`:""}<button class="btn blue" id="again">はじめから もう一回</button><button class="btn ghost" id="back">練習をえらぶ</button></div></div>`;
+    if($("retry"))$("retry").onclick=()=>startRound(Q.t,shuffle(ng));
+    $("again").onclick=()=>startRound(Q.t);$("back").onclick=()=>{Q=null;render()};return;
+  }
+  const answered=Q.res.length>Q.i;
+  $("main").innerHTML=`<div class="${q.tap?"grid":""}">${q.tap?`<div class="mapbox" id="tapmap">${mapSVG(REG,"tap",Q.mark)}</div>`:""}
+   <div class="panel"><div class="qtop"><span class="tag" style="--c:${REG==="all"?"#1c2430":RCOL[REG]}">${RNAME(Q.reg)}・${MODES[Q.t].t}${Q.retry?"（まちがえた問題）":""}</span><span style="font-weight:800">${Q.i+1} / ${Q.list.length}</span></div>${barHTML()}
+   <p class="q">${esc(q.q)}</p>${q.fig||""}
+   ${q.tap?`<p class="hint">${Q.hint?"ヒント：県庁所在地は「"+esc(capOf(q.n))+"」":"わからないときは、ヒントを使おう。"}</p>`:
+     `<div class="choices">${q.ch.map(c=>`<button class="ch ${answered?(c===q.ans?"ok":c===Q.pick?"ng":""):(Q.hide&&Q.hide.includes(c)?"gone":"")}" data-c="${esc(c)}" ${answered?"disabled":""}>${esc(c)}</button>`).join("")}</div>`}
+   <div id="resBox">${answered?resHTML(q):`<div class="acts"><button class="btn ghost small" id="hintBtn" ${Q.hint?"disabled":""}>ヒント</button><button class="btn ghost small" id="quit">やめる</button></div>`}</div></div></div>`;
+  if(!answered){
+    $("hintBtn").onclick=()=>{Q.hint=true;if(!q.tap)Q.hide=shuffle(q.ch.filter(c=>c!==q.ans)).slice(0,2);render()};
+    $("quit").onclick=()=>{Q=null;render()};
+    $("main").querySelectorAll(".ch").forEach(b=>b.onclick=()=>answer(b.dataset.c));
+    if(q.tap)$("tapmap").onclick=e=>{const p=e.target.closest("[data-p]");if(p)answer(ken(p.dataset.p),p.dataset.p)};
+  }else{$("next").onclick=next;$("next").focus()}
+}
+const barHTML=()=>`<div class="bar">${Q.list.map((x,i)=>`<i class="${Q.res[i]===true?"o":Q.res[i]===false?"x":i===Q.i&&!Q.done?"n":""}"></i>`).join("")}</div>`;
+const resHTML=q=>{const ok=Q.res[Q.i];return `<div class="res"><p class="big" style="color:${ok?"var(--grn)":"var(--red)"}">${ok?"正解！":"ざんねん…"}</p>
+  ${q.vals?`<div class="rk">${q.vals.map((v,i)=>`<div${v[3]?' class="hit"':""}><span>${esc(v[0])}</span><i style="width:${Math.max(3,v[1]/q.vals[0][1]*100)}%"></i><b>${esc(v[2])}</b></div>`).join("")}</div>`:""}<div style="display:flex;gap:10px;align-items:center">${q.icon?pic(q.n,q.icon,"ic"):q.t!=="spot"&&q.t!=="rank"?shapeSVG(q.n,"shape"):""}<p>答え：<b>${esc(q.ans)}</b><br>${esc(q.ex)}</p></div></div>
+  <div class="acts"><button class="btn" id="next">${Q.i+1<Q.list.length?"つぎの問題":"けっかを見る"}</button></div>`};
+function answer(c,tapped){
+  const q=Q.list[Q.i];if(Q.res.length>Q.i)return;const ok=c===q.ans;Q.res.push(ok);Q.pick=c;
+  if(q.tap){Q.mark={[q.n]:"ok"};if(!ok&&tapped)Q.mark[tapped]="ng"}
+  R.ans++;if(ok)R.ok++;const d=today();if(!R.days.includes(d))R.days.push(d);if(R.days.length>400)R.days=R.days.slice(-400);
+  save();render();
+}
+function next(){Q.i++;Q.hint=false;Q.hide=null;Q.mark=null;Q.pick=null;if(Q.i>=Q.list.length)Q.done=true;render();window.scrollTo({top:0,behavior:"smooth"})}
+
+/* ---------- 動画 ---------- */
+function drawVideo(){
+  $("main").innerHTML=`<div class="panel" style="margin-bottom:12px"><h2>地方ごとの解説動画</h2><p style="margin:0">見てから図鑑や練習をすると、すごろくで強くなるよ。</p></div>
+   <div class="vids">${REGIONS.map((t,r)=>`<div class="vid" style="--c:${RCOL[r]}"><b style="font-size:18px">${t}</b>
+    ${VIDEOS[r]?`<video controls preload="metadata" src="${VIDEOS[r]}"></video>`:`<div class="soon">じゅんびちゅう<br>（もうすぐ見られます）</div>`}
+    <div class="acts"><button class="btn ghost small" data-zr="${r}">${t}の図鑑へ</button></div></div>`).join("")}</div>`;
+}
+
+/* ---------- きろく ---------- */
+const stampsOf=r=>{const c=zCount(r),st=[{k:"zukan",t:"図鑑",on:c.done===c.all}];modesFor(r).forEach(m=>st.push({k:m,t:MODES[m].t,on:!!R.clear[m+"-"+r]}));return st};
+const medal=c=>`<svg class="medal" viewBox="0 0 34 34" aria-hidden="true"><path d="M10 0h6l-3 12zM18 0h6l-3 12z" fill="#2f7fd6"/><circle cx="17" cy="21" r="12" fill="${c}" stroke="#ffc928" stroke-width="3"/><path d="M17 14l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z" fill="#fff"/></svg>`;
+function drawRec(){
+  const done=REGIONS.map((t,r)=>stampsOf(r).every(s=>s.on)),nd=done.filter(Boolean).length;
+  const seenP=P.filter(p=>R.seen[p.n]).length;
+  $("main").innerHTML=`<div class="panel" style="margin-bottom:12px"><h2>${nd===8?"全国はかせ！":"はかせメダル "+nd+" / 8"}</h2>
+   <div class="nums"><div class="num"><b>${seenP}</b>図鑑で見た県（47のうち）</div><div class="num"><b>${R.ok}</b>正解した問題（${R.ans}問のうち）</div><div class="num"><b>${R.days.length}</b>練習した日</div></div>
+   <p class="hint" style="margin:0">スタンプを全部集めると、その地方の「はかせメダル」がもらえます。</p></div>
+   <div class="stamps">${REGIONS.map((t,r)=>`<div class="rcard ${done[r]?"done":""}" style="--c:${RCOL[r]}"><h4>${done[r]?medal(RCOL[r]):""}${t}${done[r]?" はかせ":""}</h4>
+     <div class="st4">${stampsOf(r).map(s=>`<span class="stamp ${s.on?"on pop":""}">${s.t}${s.on?"<br>★":""}</span>`).join("")}</div></div>`).join("")}</div>
+   <div class="acts"><button class="btn ghost small" id="reset">きろくを消す</button></div>`;
+  $("reset").onclick=()=>{$("modal").innerHTML=`<h2>きろくを全部消しますか？</h2><p>スタンプ・メダル・図鑑のしるしが、全部なくなります。</p><div class="acts"><button class="btn" id="yes">消す</button><button class="btn ghost" id="no">やめる</button></div>`;$("ov").hidden=false;$("no").focus();
+    $("no").onclick=()=>{$("ov").hidden=true};$("yes").onclick=()=>{Object.assign(R,{seen:{},spot:{},clear:{},best:{},days:[],ans:0,ok:0});save();$("ov").hidden=true;render()}};
+}
+
+/* ---------- 全体 ---------- */
+function render(){
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.v===V));
+  drawRegs();({zukan:drawZukan,drill:drawDrill,video:drawVideo,rec:drawRec})[V]();
+}
+$("main").addEventListener("click",e=>{
+  if(V==="drill"&&Q&&!Q.done)return;
+  const m=e.target.closest("[data-m]");if(m){startRound(m.dataset.m);return}
+  const zr=e.target.closest("[data-zr]");if(zr){V="zukan";REG=+zr.dataset.zr;SEL=null;render();return}
+  const gv=e.target.closest("[data-go]");if(gv){V=gv.dataset.go;render();return}
+  const p=e.target.closest("[data-p]"),s=e.target.closest("[data-s]");
+  if(p||s){if(V!=="zukan"){V="zukan";Q=null}openSel(p?"p":"s",p?p.dataset.p:s.dataset.s)}
+});
+$("ov").onclick=e=>{if(e.target===$("ov"))$("ov").hidden=true};
+const fromHash=()=>{const h=location.hash.slice(1);if(["zukan","drill","video","rec"].includes(h))V=h};
+addEventListener("hashchange",()=>{fromHash();render()});
+fromHash();render();
+}
+</script></body></html>
